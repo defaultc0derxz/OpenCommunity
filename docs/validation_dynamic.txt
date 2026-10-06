@@ -1,0 +1,29 @@
+Validacao dinamica — memoria do javaw.exe (equivale a procdump -ma + strings)
+PID: 21348, lidos 1542.1 MB em 1941 regioes commit legiveis (cap 1.5GB)
+Metodo: VirtualQueryEx + ReadProcessMemory + contagem ASCII exata (Python, sem Sysinternals)
+Nota: runtime.dll NAO esta injetado neste PID (modulos verificados) — cenarios A/B/C exigem injecao + menu aberto; D exige unload.
+Contexto dos residuos genericos: amostras de "ArrayList" = "java/util/ArrayList<...gson/JsonElement...>", "java/util/ArrayList<...typesafe/config...", "java/util/ArrayList<Ljdk/jfr..." — JVM/Minecraft, NAO o modulo. "Notifications" (150) e "DamageIndicator" (1) sao palavras genericas do hospedeiro. Identificadores unicos do cheat: 0 hits.
+
+  AutoClicker: 0
+  ArmorFilter: 0
+  ArmorSwap: 0
+  AutoGapple: 0
+  NoHitDelay: 0
+  NoJumpDelay: 0
+  ArrayList: 1818 (java/util/ArrayList — falso positivo JVM)
+  DamageIndicator: 1 (hospedeiro)
+  EnemyInfoList: 0
+  Notifications: 150 (hospedeiro)
+  ItemChams: 0
+  NoRender: 0
+  HideClans: 0
+  Min CPS: 0
+  Max CPS: 0
+  Show Allies Count: 0
+  Player Name: 0
+  J3 Ultimate: 0
+  Astralis: 0
+  Browse All Players: 0
+  Open in new Application: 0
+
+Identificadores unicos do cheat com leak: 0.

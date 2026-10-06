@@ -1,0 +1,33 @@
+Checklist de varredura §4 — branch feat/obfuscate-strings
+
+### 1. MODULE_INFO sem XOR (esperado 0 — macro + 15 usos com XOR)
+0
+
+### 2. std::string m_Name persistente (esperado 0)
+0
+
+### 2b. Campos EncString presentes
+Module.h:152: EncString m_Name
+ModuleOption.h:12: EncString name
+ModuleOption.h:26: EncString buttonLabel
+ModuleOption.h:29: EncString playerHeadName
+
+### 3. GetName() legado (esperado 0)
+0
+
+### 4. Comparacao plaintext == "Modulo" (esperado 0)
+0
+
+### 5. m_ModuleName via GetName (esperado 0)
+0
+
+### 6. WipeAllXorStrings (Notifications.cpp:549,568,575 + Main.cpp:200)
+4 hits — todos em contexto de wipe/scrub, nenhum em cache de plaintext
+
+### 6b. Scrub presente
+Notifications.cpp:586 (ScrubNotifications def), Notifications.h:69 (decl)
+Main.cpp:71 (ScrubRuntimeUiTextState def), Main.cpp:197-199 (DETACH: ScrubRuntimeUi + ScrubAll + ScrubNotifications)
+Screen.cpp:3831 (ScrubUiTextState def), Screen.cpp:3838-3839 (Shutdown: scrub + ScrubAll + WipeAll), Screen.h:53 (decl)
+
+### 7. RTTI desabilitado (RuntimeTypeInfo=false em Debug e Release)
+runtime.vcxproj:71,94 — 2 ocorrencias

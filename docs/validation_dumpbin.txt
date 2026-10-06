@@ -1,0 +1,4 @@
+dumpbin /RAWDATA runtime.dll — branch feat/obfuscate-strings
+Comando: dumpbin.exe /RAWDATA runtime\build\Release\runtime.dll | Select-String "AutoClicker|ArrayList|EnemyInfoList|HideClans|Target|Notifications|Min CPS|Player Name"
+Resultado: 0 linhas (somente codigo de saida 0, sem matches).
+Conclusao: PASS — .rdata sem plaintext dos identificadores.

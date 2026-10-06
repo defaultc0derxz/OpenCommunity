@@ -1,0 +1,40 @@
+Baseline (pre-fix) runtime.dll strings — commit 405df98
+Arquivo: C:\Users\andre\AppData\Local\Temp\opencode\baseline\runtime\build\Release\runtime.dll (2971136 bytes)
+Metodo: contagem de ocorrencias ASCII exatas no binario (equivale a `strings | grep`)
+
+Identificadores com leak: 33/33
+  AutoClicker: 3 LEAK
+  ArmorFilter: 3 LEAK
+  ArmorSwap: 3 LEAK
+  AutoGapple: 3 LEAK
+  NoHitDelay: 3 LEAK
+  NoJumpDelay: 3 LEAK
+  ArrayList: 3 LEAK
+  DamageIndicator: 3 LEAK
+  Nametags: 3 LEAK
+  EnemyInfoList: 3 LEAK
+  Notifications: 3 LEAK
+  ItemChams: 2 LEAK
+  NoRender: 3 LEAK
+  Target: 3 LEAK
+  HideClans: 3 LEAK
+  Min CPS: 1 LEAK
+  Max CPS: 1 LEAK
+  Show Allies: 3 LEAK
+  Player Name: 1 LEAK
+  Item Chams: 1 LEAK
+  J3 Ultimate: 1 LEAK
+  Astralis: 2 LEAK
+  Low Armor: 1 LEAK
+  Break Armor: 2 LEAK
+  Browse All Players: 1 LEAK
+  Open in new Application: 1 LEAK
+  AllEntities: 1 LEAK
+  MaxRenderRange: 1 LEAK
+  Automatically clicks: 1 LEAK
+  Displays active: 1 LEAK
+  Tracks enemy: 1 LEAK
+  Hides allied: 1 LEAK
+  Highlights eligible: 1 LEAK
+
+Conclusao: baseline VAZA (hits > 0) — prova do problema §1.

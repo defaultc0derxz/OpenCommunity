@@ -9,6 +9,7 @@
 #include "game/jni/JniRefs.h"
 #include "../../shared/common/logging/Logger.h"
 #include "../../deps/minhook/MinHook.h"
+#include "../../deps/imgui/imgui_internal.h"
 
 namespace {
     const char* VersionToString(GameVersions version) {
@@ -63,6 +64,32 @@ static void SafeTickSynchronousFallback(ModuleManager* modules) {
 static void SafeShutdownRuntimeAll(ModuleManager* modules, void* env) {
     __try {
         modules->ShutdownRuntimeAll(env);
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+}
+
+static void ScrubRuntimeUiTextState() {
+    __try {
+        ImGuiContext* ctx = ImGui::GetCurrentContext();
+        if (!ctx) return;
+        for (ImGuiWindow* w : ctx->Windows) {
+            if (w && w->Name && w->NameBufLen > 0)
+                MemoryScrub::Wipe(w->Name, static_cast<size_t>(w->NameBufLen));
+        }
+        for (ImGuiWindow* w : ctx->WindowsFocusOrder) {
+            if (w && w->Name && w->NameBufLen > 0)
+                MemoryScrub::Wipe(w->Name, static_cast<size_t>(w->NameBufLen));
+        }
+        if (ctx->InputTextState.TextA.Data && ctx->InputTextState.TextA.Capacity > 0)
+            MemoryScrub::Wipe(ctx->InputTextState.TextA.Data, static_cast<size_t>(ctx->InputTextState.TextA.Capacity));
+        if (ctx->InputTextState.InitialTextA.Data && ctx->InputTextState.InitialTextA.Capacity > 0)
+            MemoryScrub::Wipe(ctx->InputTextState.InitialTextA.Data, static_cast<size_t>(ctx->InputTextState.InitialTextA.Capacity));
+        if (ctx->SettingsWindows.Buf.Data && ctx->SettingsWindows.Buf.Capacity > 0)
+            MemoryScrub::Wipe(ctx->SettingsWindows.Buf.Data, static_cast<size_t>(ctx->SettingsWindows.Buf.Capacity));
+        ctx->SettingsWindows.clear();
+        if (ctx->SettingsIniData.Buf.Data && ctx->SettingsIniData.Buf.Capacity > 0)
+            MemoryScrub::Wipe(ctx->SettingsIniData.Buf.Data, static_cast<size_t>(ctx->SettingsIniData.Buf.Capacity));
+        ctx->SettingsIniData.clear();
     } __except(EXCEPTION_EXECUTE_HANDLER) {
     }
 }
@@ -167,9 +194,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         break;
         
     case DLL_PROCESS_DETACH:
-        string_obfuscation::WipeAllXorStrings();
+        ScrubRuntimeUiTextState();
         if (ModuleManager::Get()) ModuleManager::Get()->ScrubAllTextBuffers();
         Notifications::ScrubNotifications();
+        string_obfuscation::WipeAllXorStrings();
         break;
     }
     

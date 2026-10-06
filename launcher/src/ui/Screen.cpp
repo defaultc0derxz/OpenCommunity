@@ -3828,8 +3828,16 @@ bool Screen::Initialize() {
     return true;
 }
 
+void Screen::ScrubUiTextState() {
+    MemoryScrub::Wipe(m_SearchQuery, sizeof(m_SearchQuery));
+}
+
 void Screen::Shutdown() {
     if (!m_Initialized) return;
+
+    ScrubUiTextState();
+    if (ModuleManager::Get()) ModuleManager::Get()->ScrubAllTextBuffers();
+    string_obfuscation::WipeAllXorStrings();
 
     if (m_WindowMode == WindowMode::EnemyInfoWindow) {
         ClearEnemyInfoWindowState();

@@ -1,0 +1,40 @@
+Pos-fix runtime.dll strings — branch feat/obfuscate-strings
+Arquivo: C:\Users\andre\OneDrive\Desktop\OpenCommunity\runtime\build\Release\runtime.dll (2988032 bytes)
+RTTI desabilitado (/GR-), literais via XOR()+EncString.
+
+Identificadores com leak: 0/33
+  AutoClicker: 0 ok
+  ArmorFilter: 0 ok
+  ArmorSwap: 0 ok
+  AutoGapple: 0 ok
+  NoHitDelay: 0 ok
+  NoJumpDelay: 0 ok
+  ArrayList: 0 ok
+  DamageIndicator: 0 ok
+  Nametags: 0 ok
+  EnemyInfoList: 0 ok
+  Notifications: 0 ok
+  ItemChams: 0 ok
+  NoRender: 0 ok
+  Target: 0 ok
+  HideClans: 0 ok
+  Min CPS: 0 ok
+  Max CPS: 0 ok
+  Show Allies: 0 ok
+  Player Name: 0 ok
+  Item Chams: 0 ok
+  J3 Ultimate: 0 ok
+  Astralis: 0 ok
+  Low Armor: 0 ok
+  Break Armor: 0 ok
+  Browse All Players: 0 ok
+  Open in new Application: 0 ok
+  AllEntities: 0 ok
+  MaxRenderRange: 0 ok
+  Automatically clicks: 0 ok
+  Displays active: 0 ok
+  Tracks enemy: 0 ok
+  Hides allied: 0 ok
+  Highlights eligible: 0 ok
+
+Conclusao: PASS — 0 hits (equivalente estatico de G3)
