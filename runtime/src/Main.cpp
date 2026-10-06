@@ -108,9 +108,9 @@ static DWORD MainThreadImpl() {
     auto* modules = ModuleManager::Get();
     modules->SetModuleToggleCallback([](const Module& module, bool enabled) {
         if (enabled) {
-            Notifications::SendNotifications::ENABLED(module.GetName());
+            Notifications::SendNotifications::ENABLED(module);
         } else {
-            Notifications::SendNotifications::DISABLED(module.GetName());
+            Notifications::SendNotifications::DISABLED(module);
         }
     });
 
@@ -167,6 +167,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
         break;
         
     case DLL_PROCESS_DETACH:
+        string_obfuscation::WipeAllXorStrings();
+        if (ModuleManager::Get()) ModuleManager::Get()->ScrubAllTextBuffers();
+        Notifications::ScrubNotifications();
         break;
     }
     

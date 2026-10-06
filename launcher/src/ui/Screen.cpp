@@ -2249,7 +2249,7 @@ namespace
         drawList->AddRect(panelMin, panelMax, color::GetBorderU32(0.82f), panelRounding, 0, 1.0f);
 
         const bool enabled = config && config->EnemyInfoList.m_Enabled;
-        const char* title = enabled ? "EnemyInfoList" : "EnemyInfoList (disabled)";
+        const char* title = enabled ? XOR("EnemyInfoList") : XOR("EnemyInfoList (disabled)");
         drawList->AddText(titleFont, titleFontSize, ImVec2(panelMin.x + horizontalPadding, panelMin.y + 10.0f), color::GetStrongTextU32(), title);
 
         DrawEnemyInfoSubtitle(
@@ -3135,8 +3135,8 @@ namespace
             drawList->AddRectFilled(ImVec2(maxCard.x - 24.0f, min.y + 7.0f), ImVec2(maxCard.x - 8.0f, min.y + 21.0f), active ? color::GetLinkU32() : color::GetFieldBgU32(0.92f), 7.0f);
         };
 
-        drawMiniModuleCard(cardOneMin, cardOneMax, "ArrayList", true);
-        drawMiniModuleCard(cardTwoMin, cardTwoMax, "Target", false);
+        drawMiniModuleCard(cardOneMin, cardOneMax, XOR("ArrayList"), true);
+        drawMiniModuleCard(cardTwoMin, cardTwoMax, XOR("Target"), false);
     }
 
     float ColorLuminance(const ImVec4& colorValue)
@@ -4477,7 +4477,7 @@ void Screen::RenderHUDPreview() {
     auto* moduleManager = ModuleManager::Get();
     bool arrayListEnabled = false;
     for (const auto& mod : moduleManager->GetModules(ModuleCategory::Visuals)) {
-        if (mod->GetName() == "ArrayList" && mod->IsEnabled()) {
+        if (std::strcmp(mod->GetNameEnc().c_str(), XOR("ArrayList")) == 0 && mod->IsEnabled()) {
             arrayListEnabled = true;
             break;
         }
@@ -4587,11 +4587,11 @@ void Screen::RenderHUDPreview() {
     ModuleCategory cats[] = { ModuleCategory::Combat, ModuleCategory::Movement, ModuleCategory::Visuals, ModuleCategory::Settings };
     for (auto cat : cats) {
         for (const auto& mod : moduleManager->GetModules(cat)) {
-            if (!mod->IsEnabled() || mod->GetName() == "ArrayList") {
+            if (!mod->IsEnabled() || std::strcmp(mod->GetNameEnc().c_str(), XOR("ArrayList")) == 0) {
                 continue;
             }
 
-            const std::string name = FormatModuleName(mod->GetName(), config && config->HUD.m_SpacedModules);
+            const std::string name = FormatModuleName(std::string(mod->GetNameEnc().c_str()), config && config->HUD.m_SpacedModules);
             const std::string tag = mod->GetTag();
             float totalWidth = CalcTextSizeWithFont(nameFont, name.c_str(), nameFontSize).x;
             if (!tag.empty()) {
@@ -4736,7 +4736,7 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
         if (!visibleOrder.empty()) {
             cardHeight += static_cast<float>(visibleOrder.size()) * optLineH + GetModuleBodyFooterSpacing(mod, visibleOrder);
         }
-        if (mod && mod->GetName() == "EnemyInfoList") {
+        if (mod && std::strcmp(mod->GetNameEnc().c_str(), XOR("EnemyInfoList")) == 0) {
             cardHeight += GetEnemyInfoPreviewHeight(config, kEnemyInfoCardPreviewRows, true);
         }
         return cardHeight;
@@ -4749,7 +4749,7 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
     float layoutColY[2] = { 0.0f, 0.0f };
     for (const auto& mod : modules) {
         if (searchQuery && searchQuery[0] != '\0') {
-            std::string name = mod->GetName();
+            std::string name(mod->GetNameEnc().c_str());
             std::string query = searchQuery;
             std::transform(name.begin(), name.end(), name.begin(), ::tolower);
             std::transform(query.begin(), query.end(), query.begin(), ::tolower);
@@ -4782,7 +4782,7 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
         auto& mod = modules[mi];
 
         if (searchQuery && searchQuery[0] != '\0') {
-            std::string name = mod->GetName();
+            std::string name(mod->GetNameEnc().c_str());
             std::string query = searchQuery;
             std::transform(name.begin(), name.end(), name.begin(), ::tolower);
             std::transform(query.begin(), query.end(), query.begin(), ::tolower);
@@ -4869,16 +4869,16 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
                 if (it != g_ModuleIconCache.end()) {
                     moduleIcon = it->second;
                 }
-            } else if (!mod->GetImagePath().empty()) {
-                auto it = g_ModulePathIconCache.find(mod->GetImagePath());
+            } else if (mod->HasImagePath()) {
+                auto it = g_ModulePathIconCache.find(std::string(mod->GetImagePathEnc().c_str()));
                 if (it == g_ModulePathIconCache.end()) {
                     ID3D11ShaderResourceView* srv = nullptr;
-                    const auto resolvedPath = ResolveModuleImagePath(mod->GetImagePath());
+                    const auto resolvedPath = ResolveModuleImagePath(std::string(mod->GetImagePathEnc().c_str()));
                     if (!resolvedPath.empty()) {
                         srv = CreateTextureFromFile(device, resolvedPath, true);
                     }
-                    g_ModulePathIconCache[mod->GetImagePath()] = srv;
-                    it = g_ModulePathIconCache.find(mod->GetImagePath());
+                    g_ModulePathIconCache[std::string(mod->GetImagePathEnc().c_str())] = srv;
+                    it = g_ModulePathIconCache.find(std::string(mod->GetImagePathEnc().c_str()));
                 }
 
                 if (it != g_ModulePathIconCache.end()) {
@@ -4973,14 +4973,14 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
         ImFont* nf = fontBold ? fontBold : ImGui::GetFont();
         float nameFS = nf->FontSize;
         const ImVec2 namePos(cx + cardPadX + nameOffsetX, cy + (headerH - nameFS) * 0.5f);
-        dl->AddText(nf, nameFS, namePos, color::GetStrongTextU32(), mod->GetName().c_str());
+        dl->AddText(nf, nameFS, namePos, color::GetStrongTextU32(), mod->GetNameEnc().c_str());
 
         if (mod->IsBeta()) {
             const char* betaLabel = "Beta";
             const ImVec2 betaTextSize = bf->CalcTextSizeA(bfs, FLT_MAX, 0.0f, betaLabel);
             const float betaBadgeHeight = 18.0f;
             const float betaBadgeWidth = betaTextSize.x + 14.0f;
-            const float betaBadgeX = namePos.x + nf->CalcTextSizeA(nameFS, FLT_MAX, 0.0f, mod->GetName().c_str()).x + 8.0f;
+            const float betaBadgeX = namePos.x + nf->CalcTextSizeA(nameFS, FLT_MAX, 0.0f, mod->GetNameEnc().c_str()).x + 8.0f;
             const float betaBadgeY = cy + (headerH - betaBadgeHeight) * 0.5f;
 
             if (betaBadgeX + betaBadgeWidth <= toggleX - 8.0f) {
@@ -5067,7 +5067,7 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
                         const float headSize = 18.0f;
                         const ImVec2 headMin(optX, optY + (optLineH - headSize) * 0.5f);
                         const ImVec2 headMax(headMin.x + headSize, headMin.y + headSize);
-                        DrawPlayerHeadPreview(dl, device, labelFont, labelFS, opt.playerHeadName, headMin, headMax);
+                        DrawPlayerHeadPreview(dl, device, labelFont, labelFS, std::string(opt.playerHeadName.c_str()), headMin, headMax);
                         cbX += headSize + 8.0f;
                     }
 
@@ -5287,7 +5287,7 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
 
                     std::vector<char> textBuffer((std::max)(2, opt.textMaxLength + 1), '\0');
                     strncpy_s(textBuffer.data(), textBuffer.size(), opt.textValue.c_str(), _TRUNCATE);
-                    const bool useTargetAutocomplete = mod->GetName() == "Target" && opt.name == "Player Name";
+                    const bool useTargetAutocomplete = std::strcmp(mod->GetNameEnc().c_str(), XOR("Target")) == 0 && std::strcmp(opt.name.c_str(), XOR("Player Name")) == 0;
 
                     const float inputPadX = 6.0f;
                     const float inputPadY = 4.0f;
@@ -5324,7 +5324,7 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
                     break;
                 }
                 case OptionType::Button: {
-                    const bool fullWidthButton = mod->GetName() == "EnemyInfoList";
+                    const bool fullWidthButton = std::strcmp(mod->GetNameEnc().c_str(), XOR("EnemyInfoList")) == 0;
                     if (!fullWidthButton) {
                         dl->AddText(labelFont, labelFS, ImVec2(optX, optY + 2.0f), color::GetStrongTextU32(), opt.name.c_str());
                     }
@@ -5348,7 +5348,7 @@ static void RenderModulesForCategory(ModuleCategory category, float areaWidth, f
             if (fontBody) ImGui::PopFont();
         }
 
-        if (mod->GetName() == "EnemyInfoList") {
+        if (std::strcmp(mod->GetNameEnc().c_str(), XOR("EnemyInfoList")) == 0) {
             const float previewY = cy + headerH + 4.0f + optCount * optLineH + (optCount > 0 ? GetModuleBodyFooterSpacing(mod, visibleOptionOrder) - 2.0f : 0.0f);
             RenderEnemyInfoPreviewPanel(
                 config,
@@ -6102,7 +6102,7 @@ void Screen::RenderSettingsTab() {
         bodyColor,
         linkColor,
         linkHoverColor);
-    static const char* kGameChatOutputModes[] = { "Notifications", "Chat" };
+    const char* kGameChatOutputModes[] = { XOR("Notifications"), XOR("Chat") };
     int outputMode = config ? config->GameChat.m_OutputMode : static_cast<int>(GameChatOutputMode::Notifications);
     outputMode = (std::clamp)(outputMode, 0, static_cast<int>(IM_ARRAYSIZE(kGameChatOutputModes)) - 1);
     if (DrawSettingsComboField(
@@ -6421,7 +6421,7 @@ void Screen::RenderEnemyInfoWindow()
         23.0f);
     drawList->AddRect(cardMin, cardMax, color::GetBorderU32(0.94f), 24.0f, 0, 1.0f);
 
-    const std::string headerTitle = "EnemyInfoList";
+    const std::string headerTitle(XOR("EnemyInfoList"));
     drawList->AddText(
         m_FontBold ? m_FontBold : ImGui::GetFont(),
         26.0f,
