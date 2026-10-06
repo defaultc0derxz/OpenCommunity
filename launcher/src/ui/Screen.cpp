@@ -5446,7 +5446,7 @@ void Screen::RenderSettingsTab() {
 
     auto measureSettingsTextHeight = [&](const std::string& text, float maxWidth, float fontSize) -> float {
         std::vector<SettingsTextSegment> segments;
-        segments.push_back({ text, nullptr, false });
+        segments.push_back({ text, std::string{}, false });
         return DrawWrappedSettingsLine(
             nullptr,
             ImVec2(0.0f, 0.0f),
@@ -6070,7 +6070,7 @@ void Screen::RenderSettingsTab() {
         drawList,
         ImVec2(chatMin.x + cardPadding, chatMin.y + chatIntroTopOffset),
         textWidth,
-        { { chatIntroText, nullptr, false } },
+        { { chatIntroText, std::string{}, false } },
         bodyFont,
         accentFont,
         bodyFontSize,
@@ -6084,7 +6084,7 @@ void Screen::RenderSettingsTab() {
         drawList,
         ImVec2(chatMin.x + cardPadding, chatToggleRowY + chatDescriptionOffset),
         chatDetailColumnWidth,
-        { { chatToggleDescription, nullptr, false } },
+        { { chatToggleDescription, std::string{}, false } },
         bodyFont,
         accentFont,
         bodyFontSize - 1.0f,
@@ -6103,7 +6103,7 @@ void Screen::RenderSettingsTab() {
         drawList,
         ImVec2(chatMin.x + cardPadding, outputRowY + chatDescriptionOffset),
         chatDetailColumnWidth,
-        { { chatOutputDescription, nullptr, false } },
+        { { chatOutputDescription, std::string{}, false } },
         bodyFont,
         accentFont,
         bodyFontSize - 1.0f,
@@ -6131,7 +6131,7 @@ void Screen::RenderSettingsTab() {
         drawList,
         ImVec2(chatMin.x + cardPadding, prefixRowY + chatDescriptionOffset),
         chatDetailColumnWidth,
-        { { chatPrefixDescription, nullptr, false } },
+        { { chatPrefixDescription, std::string{}, false } },
         bodyFont,
         accentFont,
         bodyFontSize - 1.0f,
@@ -6160,7 +6160,7 @@ void Screen::RenderSettingsTab() {
         drawList,
         ImVec2(chatMin.x + cardPadding, chatExampleY),
         textWidth,
-        { { chatExampleLine, nullptr, false } },
+        { { chatExampleLine, std::string{}, false } },
         bodyFont,
         accentFont,
         bodyFontSize - 1.0f,
@@ -6171,7 +6171,7 @@ void Screen::RenderSettingsTab() {
         drawList,
         ImVec2(chatMin.x + cardPadding, chatExampleY + chatExampleHeight + 8.0f),
         textWidth,
-        { { chatTipLine, nullptr, false } },
+        { { chatTipLine, std::string{}, false } },
         bodyFont,
         accentFont,
         bodyFontSize - 1.0f,
@@ -6220,7 +6220,7 @@ void Screen::RenderSettingsTab() {
 
     std::vector<SettingsTextSegment> currentBuildLine = {
         { "Current build: " },
-        { releaseStatus.currentLabel, nullptr, true }
+        { releaseStatus.currentLabel, std::string{}, true }
     };
 
     std::vector<SettingsTextSegment> releaseLine;
