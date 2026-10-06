@@ -39,6 +39,7 @@ namespace OpenCommunity {
             component ? component : XOR("Core"),
             message ? message : "");
         OutputDebugStringA(buffer);
+        MemoryScrub::Wipe(buffer, sizeof(buffer));
     }
 
     inline void LogFormat(LogLevel level, const char* component, const char* format, ...) {
@@ -51,6 +52,7 @@ namespace OpenCommunity {
 
         message[sizeof(message) - 1] = '\0';
         Log(level, component, message);
+        MemoryScrub::Wipe(message, sizeof(message));
     }
 }
 

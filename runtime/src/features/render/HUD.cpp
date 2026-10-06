@@ -653,4 +653,10 @@ void HUD::Render(ModuleConfig* config, float screenW, float screenH) {
             ++it;
         }
     }
+
+    // Higiene de heap: nomes/tags por frame nao podem permanecer no heap liberado.
+    for (auto& mod : modules) {
+        MemoryScrub::ClearString(mod.name);
+        MemoryScrub::ClearString(mod.tag);
+    }
 }

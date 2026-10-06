@@ -4494,7 +4494,7 @@ void Screen::RenderHUDPreview() {
         return;
     }
 
-    static std::unordered_map<std::string, float> slideProgress;
+    static std::unordered_map<std::uint64_t, float> slideProgress;
     static auto lastFrameTime = std::chrono::steady_clock::now();
 
     const auto now = std::chrono::steady_clock::now();
@@ -4586,16 +4586,17 @@ void Screen::RenderHUDPreview() {
     struct ModEntry {
         std::string name;
         std::string tag;
-        float totalWidth;
+        float totalWidth = 0.0f;
+        std::uint64_t hash = 0;
     };
 
     std::vector<ModEntry> activeModules;
-    std::vector<std::string> currentActiveKeys;
+    std::vector<std::uint64_t> currentActiveKeys;
 
     ModuleCategory cats[] = { ModuleCategory::Combat, ModuleCategory::Movement, ModuleCategory::Visuals, ModuleCategory::Settings };
     for (auto cat : cats) {
         for (const auto& mod : moduleManager->GetModules(cat)) {
-            if (!mod->IsEnabled() || std::strcmp(mod->GetNameEnc().c_str(), XOR("ArrayList")) == 0) {
+            if (!mod || !mod->IsEnabled() || std::strcmp(mod->GetNameEnc().c_str(), XOR("ArrayList")) == 0) {
                 continue;
             }
 
@@ -4606,17 +4607,15 @@ void Screen::RenderHUDPreview() {
                 totalWidth += spaceWidth + CalcTextSizeWithFont(regularFont, tag.c_str(), detailFontSize).x;
             }
 
-            activeModules.push_back({ name, tag, totalWidth });
-            currentActiveKeys.push_back(name);
+            ModEntry e; e.name = name; e.tag = tag; e.totalWidth = totalWidth; e.hash = mod->GetNameHash();
+            activeModules.push_back(std::move(e));
+            currentActiveKeys.push_back(mod->GetNameHash());
         }
     }
 
     for (auto it = slideProgress.begin(); it != slideProgress.end(); ) {
-        bool found = false;
-        for (const auto& k : currentActiveKeys) {
-            if (k == it->first) { found = true; break; }
-        }
-        if (!found) it = slideProgress.erase(it);
+        if (std::find(currentActiveKeys.begin(), currentActiveKeys.end(), it->first) == currentActiveKeys.end())
+            it = slideProgress.erase(it);
         else ++it;
     }
 
@@ -4647,9 +4646,9 @@ void Screen::RenderHUDPreview() {
         }
         const ImU32 modColor = MakeColorU32(cr, cg, cb);
 
-        if (slideProgress.find(mod.name) == slideProgress.end())
-            slideProgress[mod.name] = 0.0f;
-        float& progress = slideProgress[mod.name];
+        if (slideProgress.find(mod.hash) == slideProgress.end())
+            slideProgress[mod.hash] = 0.0f;
+        float& progress = slideProgress[mod.hash];
         if (progress < 1.0f) {
             progress += deltaTime * 6.0f;
             if (progress > 1.0f) {
@@ -4695,6 +4694,11 @@ void Screen::RenderHUDPreview() {
         }
 
         idx++;
+    }
+
+    for (auto& mod : activeModules) {
+        MemoryScrub::ClearString(mod.name);
+        MemoryScrub::ClearString(mod.tag);
     }
 }
 
@@ -5474,9 +5478,9 @@ void Screen::RenderSettingsTab() {
     const std::string chatPrefixDescription =
         "The client only reads messages that start with this prefix.";
     const std::string chatExampleLine =
-        "Examples: " + previewPrefix + "t autoclicker  |  " +
-        previewPrefix + "target mode low-armor  |  " +
-        previewPrefix + "enemyinfolist status  |  Tab autocomplete";
+        std::string(XOR("Examples: ")) + previewPrefix + XOR("t autoclicker  |  ") +
+        previewPrefix + XOR("target mode low-armor  |  ") +
+        previewPrefix + XOR("enemyinfolist status  |  Tab autocomplete");
     const std::string chatTipLine =
         "Tip: type .t and press Tab to cycle modules, or type a module name to cycle its commands and option values.";
 
