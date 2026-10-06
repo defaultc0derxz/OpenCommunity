@@ -15,15 +15,15 @@ namespace {
     const char* VersionToString(GameVersions version) {
         switch (version) {
         case BADLION:
-            return "BADLION";
+            return XOR("BADLION");
         case FORGE_1_8:
-            return "FORGE_1_8";
+            return XOR("FORGE_1_8");
         case FEATHER_1_8:
-            return "FEATHER_1_8";
+            return XOR("FEATHER_1_8");
         case LUNAR:
-            return "LUNAR";
+            return XOR("LUNAR");
         default:
-            return "UNKNOWN";
+            return XOR("UNKNOWN");
         }
     }
 }
@@ -96,39 +96,39 @@ static void ScrubRuntimeUiTextState() {
 
 static DWORD MainThreadImpl() {
     Sleep(3000);
-    OC_LOG_INFO("Runtime", "Main thread started.");
-    
+    OC_LOG_INFO(XOR("Runtime"), XOR("Main thread started."));
+
     if (!Bridge::Get()->Initialize()) {
-        OC_LOG_ERROR("Runtime", "Bridge initialization failed.");
+        OC_LOG_ERROR(XOR("Runtime"), XOR("Bridge initialization failed."));
         return 1;
     }
-    OC_LOG_INFO("Runtime", "Bridge initialized.");
-    
+    OC_LOG_INFO(XOR("Runtime"), XOR("Bridge initialized."));
+
     g_Game = new GameInstance();
     if (!g_Game->Attach()) {
-        OC_LOG_ERROR("Runtime", "Failed to attach to JVM/JVMTI.");
+        OC_LOG_ERROR(XOR("Runtime"), XOR("Failed to attach to JVM/JVMTI."));
         delete g_Game;
         g_Game = nullptr;
     }
     else {
-        OC_LOG_INFO("Runtime", "Attached to JVM/JVMTI.");
+        OC_LOG_INFO(XOR("Runtime"), XOR("Attached to JVM/JVMTI."));
     }
-    
+
     if (g_Game && !g_Game->InitializeGame()) {
-        OC_LOG_ERROR("Runtime", "Failed to initialize game instance.");
+        OC_LOG_ERROR(XOR("Runtime"), XOR("Failed to initialize game instance."));
         g_Game->Detach();
         delete g_Game;
         g_Game = nullptr;
     }
     else if (g_Game) {
-        OC_LOG_INFOF("Runtime", "Game initialized with version %s.", VersionToString(g_Game->GetGameVersion()));
+        OC_LOG_INFOF(XOR("Runtime"), XOR("Game initialized with version %s."), VersionToString(g_Game->GetGameVersion()));
     }
-    
+
     ModuleRegistry::RegisterAll();
-    
+
     MH_Initialize();
     const bool gameThreadHookInitialized = GameThreadHook::Initialize();
-    OC_LOG_INFOF("Runtime", "GameThreadHook initialize result: %s", gameThreadHookInitialized ? "success" : "failed");
+    OC_LOG_INFOF(XOR("Runtime"), XOR("GameThreadHook initialize result: %s"), gameThreadHookInitialized ? XOR("success") : XOR("failed"));
     RenderHook::Get()->Initialize();
     
     auto* config = Bridge::Get()->GetConfig();

@@ -43,15 +43,11 @@
 
 namespace
 {
-    constexpr const char* kCreatorProfileUrl = "https://github.com/Lopesnextgen";
-    constexpr const char* kDiscordProfileUrl = "https://discord.com/jvmexploit";
-    constexpr const char* kProjectRepositoryUrl = "https://github.com/TesseractLiberty/OpenCommunity";
-    constexpr const char* kProjectReleasesUrl = "https://github.com/TesseractLiberty/OpenCommunity/releases";
-    constexpr wchar_t kGitHubApiHost[] = L"api.github.com";
-    constexpr wchar_t kGitHubLatestReleasePath[] = L"/repos/TesseractLiberty/OpenCommunity/releases/latest";
-    constexpr wchar_t kLauncherWindowClassName[] = L"OpenCommunity";
-    constexpr wchar_t kEnemyInfoWindowClassName[] = L"OpenCommunityEnemyInfo";
-    constexpr wchar_t kEnemyInfoWindowTitle[] = L"OpenCommunity Enemy Info";
+    // URLs criptografadas em repouso via XOR() e decriptadas de forma transiente
+    // no ponto de uso (ring buffer thread_local). Sem plaintext em .rdata.
+    // (constantes removidas de proposito — ver usos com XOR() abaixo.)
+    // Host/path/janela em wide: literais removidos (.rdata) — usar XOR_W() no ponto de uso.
+    // (constantes deletadas de proposito; ver usos abaixo.)
     constexpr int kEnemyInfoArmorSlots = 4;
     constexpr int kEnemyInfoCardPreviewRows = 4;
     constexpr float kEnemyInfoCompactRowHeight = 48.0f;
@@ -84,16 +80,16 @@ namespace
         ReleaseCheckState state = ReleaseCheckState::Idle;
         std::string currentLabel = "local build";
         std::string latestTag;
-        std::string latestUrl = kProjectReleasesUrl;
+        std::string latestUrl{ XOR("https://github.com/TesseractLiberty/OpenCommunity/releases") };
         std::string latestAuthor = "Unknown";
-        std::string downloadUrl = kProjectReleasesUrl;
+        std::string downloadUrl{ XOR("https://github.com/TesseractLiberty/OpenCommunity/releases") };
         std::string message = "Use Verify updates to compare this build with the latest GitHub release.";
     };
 
     struct SettingsTextSegment
     {
         std::string text;
-        const char* url = nullptr;
+        std::string url;
         bool accent = false;
     };
 
@@ -131,8 +127,7 @@ namespace
 
     constexpr float kInjectionTypewriterCharsPerSecond = 30.0f;
     constexpr float kInjectionCursorBlinkSpeed = 6.0f;
-    constexpr char kInjectingHeadline[] = "Injecting";
-    constexpr char kInjectedHeadline[] = "Successful, Injected!";
+    // Headlines removidas daqui (plaintext em .rdata) — usar XOR() no ponto de uso.
 
     const ImVec4 kDefaultAutomaticPalette[4] = {
         ImVec4(0.92f, 0.84f, 0.71f, 1.0f),
@@ -272,7 +267,7 @@ namespace
             return {};
         }
 
-        return std::filesystem::path(tempPath) / "OpenCommunity";
+        return std::filesystem::path(tempPath) / XOR("OpenCommunity");
     }
 
     std::filesystem::path GetInterfaceThemeSettingsPath()
@@ -673,7 +668,7 @@ namespace
             return;
         }
 
-        ShellExecuteA(nullptr, "open", url, nullptr, nullptr, SW_SHOWNORMAL);
+        ShellExecuteA(nullptr, XOR("open"), url, nullptr, nullptr, SW_SHOWNORMAL);
     }
 
     void ClearEnemyInfoSecondApplicationState(ModuleConfig* config)
@@ -807,13 +802,13 @@ namespace
         outStatusCode = 0;
         outError.clear();
 
-        HINTERNET session = WinHttpOpen(L"OpenCommunity/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+        HINTERNET session = WinHttpOpen(XOR_W(L"OpenCommunity/1.0"), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
         if (!session) {
             outError = "Failed to initialize HTTP session.";
             return false;
         }
 
-        HINTERNET connection = WinHttpConnect(session, kGitHubApiHost, static_cast<INTERNET_PORT>(443), 0);
+        HINTERNET connection = WinHttpConnect(session, XOR_W(L"api.github.com"), static_cast<INTERNET_PORT>(443), 0);
         if (!connection) {
             WinHttpCloseHandle(session);
             outError = "Failed to connect to GitHub.";
@@ -823,7 +818,7 @@ namespace
         HINTERNET request = WinHttpOpenRequest(
             connection,
             L"GET",
-            kGitHubLatestReleasePath,
+            XOR_W(L"/repos/TesseractLiberty/OpenCommunity/releases/latest"),
             nullptr,
             WINHTTP_NO_REFERER,
             WINHTTP_DEFAULT_ACCEPT_TYPES,
@@ -976,7 +971,7 @@ namespace
                 nextStatus.latestAuthor = ExtractJsonStringValue(responseBody, "login");
                 nextStatus.downloadUrl = ExtractJsonStringValue(responseBody, "browser_download_url");
                 if (nextStatus.latestUrl.empty()) {
-                    nextStatus.latestUrl = kProjectReleasesUrl;
+                    nextStatus.latestUrl = XOR("https://github.com/TesseractLiberty/OpenCommunity/releases");
                 }
                 if (nextStatus.downloadUrl.empty()) {
                     nextStatus.downloadUrl = nextStatus.latestUrl;
@@ -1118,7 +1113,7 @@ namespace
                     continue;
                 }
 
-                const bool isLink = segment.url && segment.url[0] && !whitespaceOnly;
+                const bool isLink = !segment.url.empty() && !whitespaceOnly;
                 ImU32 drawColor = segment.accent ? accentColor : textColor;
                 if (isLink && canDraw) {
                     const ImVec2 tokenMin(cursorX, cursorY);
@@ -1128,7 +1123,7 @@ namespace
                     if (hovered) {
                         ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
                         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-                            OpenExternalUrl(segment.url);
+                            OpenExternalUrl(segment.url.c_str());
                         }
                     }
                 }
@@ -1182,7 +1177,7 @@ namespace
             return {};
         }
 
-        return std::filesystem::path(tempPath) / "OpenCommunity" / "player_heads";
+        return std::filesystem::path(tempPath) / XOR("OpenCommunity") / XOR("player_heads");
     }
 
     ID3D11ShaderResourceView* CreateTextureFromPixels(ID3D11Device* device, const unsigned char* pixels, int width, int height)
@@ -1431,7 +1426,7 @@ namespace
             std::filesystem::create_directories(cacheDirectory, errorCode);
 
             const HRESULT initResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-            const std::string downloadUrl = "https://minotar.net/helm/" + playerName + "/32.png";
+            const std::string downloadUrl = std::string(XOR("https://minotar.net/helm/")) + playerName + XOR("/32.png");
             const HRESULT downloadResult = URLDownloadToFileA(nullptr, downloadUrl.c_str(), cachePath.string().c_str(), 0, nullptr);
             if (SUCCEEDED(initResult)) {
                 CoUninitialize();
@@ -3113,7 +3108,7 @@ namespace
         }
 
         const ImVec2 headerMin(pos.x + sidebarWidth + 10.0f, pos.y + 10.0f);
-        drawList->AddText(titleFont, titleFontSize - 1.0f, headerMin, color::GetStrongTextU32(), "OpenCommunity");
+        drawList->AddText(titleFont, titleFontSize - 1.0f, headerMin, color::GetStrongTextU32(), XOR("OpenCommunity"));
         drawList->AddText(bodyFont, bodyFontSize - 2.0f, ImVec2(headerMin.x, headerMin.y + 16.0f), color::GetMutedTextU32(), "Theme Preview");
 
         const ImVec2 badgeMin(max.x - 48.0f, pos.y + 12.0f);
@@ -3702,12 +3697,14 @@ bool Screen::ImportAutomaticPaletteFromImage()
 
 bool Screen::Initialize() {
     ShowWindow(GetConsoleWindow(), SW_HIDE);
+    // Transientes XOR_W: RegisterClassExW/CreateWindowExW copiam o nome na chamada.
+    // (Shutdown recalcula via XOR_W para UnregisterClassW — m_Wc.lpszClassName nao e estavel.)
     const wchar_t* className = m_WindowMode == WindowMode::EnemyInfoWindow
-        ? kEnemyInfoWindowClassName
-        : kLauncherWindowClassName;
+        ? XOR_W(L"OpenCommunityEnemyInfo")
+        : XOR_W(L"OpenCommunity");
     const wchar_t* windowTitle = m_WindowMode == WindowMode::EnemyInfoWindow
-        ? kEnemyInfoWindowTitle
-        : kLauncherWindowClassName;
+        ? XOR_W(L"OpenCommunity Enemy Info")
+        : XOR_W(L"OpenCommunity");
 
     m_Wc = { sizeof(m_Wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, className, nullptr };
     RegisterClassExW(&m_Wc);
@@ -3852,7 +3849,10 @@ void Screen::Shutdown() {
     
     CleanupDeviceD3D();
     DestroyWindow(m_Hwnd);
-    UnregisterClassW(m_Wc.lpszClassName, m_Wc.hInstance);
+    // m_Wc.lpszClassName e transiente (ring) — recalcula para unregister.
+    UnregisterClassW(m_WindowMode == WindowMode::EnemyInfoWindow
+        ? XOR_W(L"OpenCommunityEnemyInfo")
+        : XOR_W(L"OpenCommunity"), m_Wc.hInstance);
     
     m_Initialized = false;
 }
@@ -3917,7 +3917,7 @@ void Screen::RenderIntro() {
         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground;
 
-    if (ImGui::Begin("OpenCommunityIntro", nullptr, flags)) {
+    if (ImGui::Begin(XOR("OpenCommunityIntro"), nullptr, flags)) {
         if (m_IntroStartTime < 0.0f) {
             m_IntroStartTime = static_cast<float>(ImGui::GetTime());
         }
@@ -4091,7 +4091,7 @@ void Screen::RenderInstanceChooser() {
         }
         
         {
-            const char* sub = "Choose your Minecraft window";
+            const char* sub = XOR("Choose your Minecraft window");
             ImGui::PushFont(m_FontBody);
             ImVec2 sSz = ImGui::CalcTextSize(sub);
             ImGui::SetCursorPos(ImVec2((m_Width - sSz.x) * 0.5f, 95.f));
@@ -4107,7 +4107,7 @@ void Screen::RenderInstanceChooser() {
             
             CHAR cName[MAX_PATH];
             GetClassNameA(hwnd, cName, _countof(cName));
-            if (strcmp(cName, "LWJGL") != 0 && strcmp(cName, "GLFW30") != 0)
+            if (strcmp(cName, XOR("LWJGL")) != 0 && strcmp(cName, XOR("GLFW30")) != 0)
                 continue;
             
             std::vector<char> title(length + 1);
@@ -4116,7 +4116,7 @@ void Screen::RenderInstanceChooser() {
         }
         
         if (instances.empty()) {
-            const char* w = "Waiting for Minecraft...";
+            const char* w = XOR("Waiting for Minecraft...");
             ImGui::PushFont(m_FontBody);
             ImVec2 wSz = ImGui::CalcTextSize(w);
             ImGui::SetCursorPos(ImVec2((m_Width - wSz.x) * 0.5f, m_Height * 0.5f - 10.f));
@@ -4144,7 +4144,7 @@ void Screen::RenderInstanceChooser() {
                         m_InjectionCompleteTime = -1.0f;
                         m_InjectionViewStartTime = -1.0f;
                         m_InterfaceTransitionStartTime = -1.0f;
-                        m_InjectionStatus = "Injecting...";
+                        m_InjectionStatus = XOR("Injecting...");
                         
                         std::thread([this, pid]() {
                             Bridge::Get()->Initialize();
@@ -4153,16 +4153,16 @@ void Screen::RenderInstanceChooser() {
                             GetModuleFileNameW(nullptr, exePath, MAX_PATH);
                             std::wstring dllPath(exePath);
                             dllPath = dllPath.substr(0, dllPath.find_last_of(L"\\/") + 1);
-                            dllPath += L"runtime.dll";
+                            dllPath += XOR_W(L"runtime.dll");
 
                             bool success = Injector::Get()->InjectFromFile(pid, dllPath);
                             
                             if (success) {
                                 m_InjectionDone = true;
-                                m_InjectionStatus = "Injected";
+                                m_InjectionStatus = XOR("Injected");
                                 m_InjectionCompleteTime = -1.0f;
                             } else {
-                                m_InjectionStatus = "Injection failed! Check if runtime.dll exists.";
+                                m_InjectionStatus = XOR("Injection failed! Check if runtime.dll exists.");
                                 m_InjectionFailed = true;
                                 m_InjectionCompleteTime = -1.0f;
                                 m_InterfaceTransitionStartTime = -1.0f;
@@ -4292,7 +4292,7 @@ void Screen::RenderInjecting() {
 
     if (m_InjectionFailed) {
         const float failureElapsed = now - m_InjectionViewStartTime;
-        RenderInjectingLayer("Injecting", 1.0f, 0.0f, 1.0f, "Injection failed", failureElapsed, true, false, m_InjectionStatus.c_str());
+        RenderInjectingLayer(XOR("Injecting"), 1.0f, 0.0f, 1.0f, XOR("Injection failed"), failureElapsed, true, false, m_InjectionStatus.c_str());
         return;
     }
 
@@ -4307,18 +4307,18 @@ void Screen::RenderInjecting() {
         }
 
         const float successElapsed = now - m_InjectionCompleteTime;
-        const float successTextDuration = (static_cast<float>(strlen(kInjectedHeadline)) / kInjectionTypewriterCharsPerSecond) + 0.7f;
+        const float successTextDuration = (static_cast<float>(strlen(XOR("Successful, Injected!"))) / kInjectionTypewriterCharsPerSecond) + 0.7f;
         const bool waitingForUpdateCheck = successElapsed >= successTextDuration && g_ReleaseCheckInProgress.load();
         RenderInjectingLayer(
-            "Injecting",
+            XOR("Injecting"),
             1.0f,
             0.0f,
             1.0f,
-            kInjectedHeadline,
+            XOR("Successful, Injected!"),
             successElapsed,
             true,
             true,
-            waitingForUpdateCheck ? "Checking for updates..." : nullptr);
+            waitingForUpdateCheck ? XOR("Checking for updates...") : nullptr);
 
         if (successElapsed >= successTextDuration) {
             ReleaseCheckStatus releaseStatus;
@@ -4348,7 +4348,7 @@ void Screen::RenderInjecting() {
     }
 
     const float injectingElapsed = now - m_InjectionViewStartTime;
-    RenderInjectingLayer("Injecting", 1.0f, 0.0f, 1.0f, kInjectingHeadline, injectingElapsed, true, false);
+    RenderInjectingLayer(XOR("Injecting"), 1.0f, 0.0f, 1.0f, XOR("Injecting"), injectingElapsed, true, false);
 }
 
 void Screen::RenderUpdatePrompt() {
@@ -4562,7 +4562,7 @@ void Screen::RenderHUDPreview() {
         const float textY = riseMode ? (topY + risePadY) : (tesseractMode ? 6.0f : topY);
         float cursorX = riseMode ? (10.0f + risePadX) : 10.0f;
 
-        const float titleWidth = CalcTextSizeWithFont(nameFont, "OpenCommunity", nameFontSize).x;
+        const float titleWidth = CalcTextSizeWithFont(nameFont, XOR("OpenCommunity"), nameFontSize).x;
         const float middleWidth = CalcTextSizeWithFont(regularFont, middle.c_str(), detailFontSize).x;
         const float fpsWidth = CalcTextSizeWithFont(regularFont, fpsText, detailFontSize).x;
 
@@ -4574,7 +4574,7 @@ void Screen::RenderHUDPreview() {
             drawList->AddRectFilled(ImVec2(boxMax.x - riseRectWidth, boxMin.y), boxMax, accentColor, 0.0f);
         }
 
-        DrawShadowedText(drawList, nameFont, nameFontSize, ImVec2(cursorX, textY), riseMode ? riseWatermarkTextColor : accentColor, shadowColor, "OpenCommunity");
+        DrawShadowedText(drawList, nameFont, nameFontSize, ImVec2(cursorX, textY), riseMode ? riseWatermarkTextColor : accentColor, shadowColor, XOR("OpenCommunity"));
         cursorX += titleWidth;
 
         DrawShadowedText(drawList, regularFont, detailFontSize, ImVec2(cursorX, textY), secondaryColor, shadowColor, middle);
@@ -5470,7 +5470,7 @@ void Screen::RenderSettingsTab() {
     const std::string chatToggleDescription =
         "Enable local client commands from the in-game chat box.";
     const std::string chatOutputDescription =
-        "Choose where command feedback is shown: Notifications or the in-game chat.";
+        XOR("Choose where command feedback is shown: Notifications or the in-game chat.");
     const std::string chatPrefixDescription =
         "The client only reads messages that start with this prefix.";
     const std::string chatExampleLine =
@@ -5562,7 +5562,7 @@ void Screen::RenderSettingsTab() {
     const std::vector<std::vector<SettingsTextSegment>> infoLines = {
         {
             { "Hey there! It's " },
-            { "Lopes", kCreatorProfileUrl, true },
+            { "Lopes", XOR("https://github.com/Lopesnextgen"), true },
             { "!" }
         },
         {
@@ -5573,9 +5573,9 @@ void Screen::RenderSettingsTab() {
         },
         {
             { "If you run into any bugs, errors, something's not working, crashing your game, or causing a memory leak (which, uh, might be happening, my bad), please hit me up on " },
-            { "Discord", kDiscordProfileUrl, true },
+            { "Discord", XOR("https://discord.com/jvmexploit"), true },
             { " or open a New Issue on " },
-            { "GitHub", kProjectRepositoryUrl, true },
+            { "GitHub", XOR("https://github.com/TesseractLiberty/OpenCommunity"), true },
             { "." }
         },
         {
@@ -6242,7 +6242,7 @@ void Screen::RenderSettingsTab() {
     case ReleaseCheckState::LocalBuild:
         releaseLine = {
             { "Latest published release: " },
-            { releaseStatus.latestTag.empty() ? std::string("unknown") : releaseStatus.latestTag, releaseStatus.latestTag.empty() ? nullptr : releaseStatus.latestUrl.c_str(), true },
+            { releaseStatus.latestTag.empty() ? std::string("unknown") : releaseStatus.latestTag, releaseStatus.latestTag.empty() ? std::string{} : releaseStatus.latestUrl, true },
             { "." }
         };
         break;
@@ -6313,8 +6313,8 @@ void Screen::RenderSettingsTab() {
 
     if (DrawRoundedActionButton(
             drawList,
-            "##settings_close_application",
-            "Close OpenCommunity Application",
+            XOR("##settings_close_application"),
+            XOR("Close OpenCommunity Application"),
             closeMin,
             ImVec2(pageWidth, buttonHeight),
             16.0f,
@@ -6476,8 +6476,8 @@ void Screen::RenderEnemyInfoWindow()
     const ImVec2 closeButtonPos(cardMax.x - cardPadding - closeButtonSize.x, cardMin.y + cardPadding);
     if (DrawRoundedActionButton(
             drawList,
-            "##enemy_info_close_second_window",
-            "Close second application",
+            XOR("##enemy_info_close_second_window"),
+            XOR("Close second application"),
             closeButtonPos,
             closeButtonSize,
             14.0f,
@@ -6499,7 +6499,7 @@ void Screen::RenderEnemyInfoWindow()
 
     ImGui::SetCursorScreenPos(ImVec2(listMin.x + 10.0f, listMin.y + 10.0f));
     if (ImGui::BeginChild(
-            "##enemy_info_second_window_scroll",
+            XOR("##enemy_info_second_window_scroll"),
             ImVec2(listMax.x - listMin.x - 20.0f, listMax.y - listMin.y - 20.0f),
             false,
             ImGuiWindowFlags_NoBackground)) {
@@ -6509,8 +6509,8 @@ void Screen::RenderEnemyInfoWindow()
 
         if (!config || entryCount <= 0) {
             const char* idleText = config && config->EnemyInfoList.m_Enabled
-                ? "Waiting for enemy data..."
-                : "Enable EnemyInfoList and attack a rival player.";
+                ? XOR("Waiting for enemy data...")
+                : XOR("Enable EnemyInfoList and attack a rival player.");
             childDrawList->AddText(
                 m_FontBody ? m_FontBody : ImGui::GetFont(),
                 18.0f,
@@ -6623,7 +6623,7 @@ void Screen::RenderMainInterfaceLayer(const char* windowName, const ImVec2& wind
 
             if (sidebarW > 54.0f) {
                 ImGui::PushClipRect(ImVec2(wp.x, wp.y), ImVec2(wp.x + sidebarW - 4.0f, wp.y + m_Height), true);
-                const char* tabNames[] = { "Combat", "Movement", "Visuals", "Settings" };
+                const char* tabNames[] = { XOR("Combat"), XOR("Movement"), XOR("Visuals"), XOR("Settings") };
                 const float t = Clamp01((sidebarW - 54.0f) / 90.0f);
                 const float textAlpha = 1.0f - powf(1.0f - t, 2.0f); 
                 const float slideX = (1.0f - t) * -8.0f; 
@@ -6728,7 +6728,7 @@ void Screen::RenderMainInterfaceLayer(const char* windowName, const ImVec2& wind
 }
 
 void Screen::RenderMainInterface() {
-    RenderMainInterfaceLayer("OpenCommunity", ImVec2(0.0f, 0.0f), true, 0.0f);
+    RenderMainInterfaceLayer(XOR("OpenCommunity"), ImVec2(0.0f, 0.0f), true, 0.0f);
 }
 
 void Screen::RenderTransitionToInterface() {
@@ -6743,11 +6743,11 @@ void Screen::RenderTransitionToInterface() {
     const float injectAlpha = 1.0f - eased;
     const float injectOffsetY = -10.0f * eased;
     const float injectScale = 1.0f - 0.02f * eased;
-    RenderInjectingLayer("InjectingTransition", injectAlpha, injectOffsetY, injectScale, kInjectedHeadline, 99.0f, true, true);
+    RenderInjectingLayer(XOR("InjectingTransition"), injectAlpha, injectOffsetY, injectScale, XOR("Successful, Injected!"), 99.0f, true, true);
 
     const float interfaceOffsetY = 22.0f * (1.0f - eased);
     const float overlayAlpha = 0.34f * (1.0f - eased);
-    RenderMainInterfaceLayer("OpenCommunityTransition", ImVec2(0.0f, interfaceOffsetY), false, overlayAlpha);
+    RenderMainInterfaceLayer(XOR("OpenCommunityTransition"), ImVec2(0.0f, interfaceOffsetY), false, overlayAlpha);
 
     ImDrawList* foreground = ImGui::GetForegroundDrawList();
     if (foreground) {

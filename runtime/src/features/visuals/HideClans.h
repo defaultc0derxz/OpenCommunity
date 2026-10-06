@@ -17,17 +17,17 @@ public:
     std::string GetTag() const override {
         std::string mode;
         if (!GetShowAllies()) {
-            mode = "Blatant";
+            mode = XOR("Blatant");
         } else {
             switch (GetShowAlliesMode()) {
             case 0:
-                mode = "Automatic";
+                mode = XOR("Automatic");
                 break;
             case 1:
-                mode = "Semi Automatic";
+                mode = XOR("Semi Automatic");
                 break;
             default:
-                mode = "Manual";
+                mode = XOR("Manual");
                 break;
             }
         }

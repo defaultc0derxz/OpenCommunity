@@ -538,7 +538,7 @@ void HUD::Render(ModuleConfig* config, float screenW, float screenH) {
         const float textY = riseLikeMode ? (topY + risePadY) : (tesseractMode ? 6.0f : topY);
         float cursorX = riseLikeMode ? (10.0f + risePadX) : 10.0f;
 
-        const float titleWidth = CalcTextSize(nameFont, nameSize, "OpenCommunity").x;
+        const float titleWidth = CalcTextSize(nameFont, nameSize, XOR("OpenCommunity")).x;
         const float segmentWidth = CalcTextSize(tagFont, tagSize, segment).x;
         const float fpsWidth = CalcTextSize(tagFont, tagSize, fpsText).x;
 
@@ -555,7 +555,7 @@ void HUD::Render(ModuleConfig* config, float screenW, float screenH) {
             drawList->AddRectFilled(ImVec2(boxMax.x - riseRectWidth, boxMin.y), boxMax, accentColor, 0.0f);
         }
 
-        DrawShadowedText(drawList, nameFont, nameSize, ImVec2(cursorX, textY), riseMode ? riseWatermarkTextColor : accentColor, shadowColor, "OpenCommunity");
+        DrawShadowedText(drawList, nameFont, nameSize, ImVec2(cursorX, textY), riseMode ? riseWatermarkTextColor : accentColor, shadowColor, XOR("OpenCommunity"));
         cursorX += titleWidth;
 
         DrawShadowedText(drawList, tagFont, tagSize, ImVec2(cursorX, textY), secondaryColor, shadowColor, segment);

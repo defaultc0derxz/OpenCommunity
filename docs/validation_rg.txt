@@ -30,4 +30,9 @@ Main.cpp:71 (ScrubRuntimeUiTextState def), Main.cpp:197-199 (DETACH: ScrubRuntim
 Screen.cpp:3831 (ScrubUiTextState def), Screen.cpp:3838-3839 (Shutdown: scrub + ScrubAll + WipeAll), Screen.h:53 (decl)
 
 ### 7. RTTI desabilitado (RuntimeTypeInfo=false em Debug e Release)
-runtime.vcxproj:71,94 — 2 ocorrencias
+runtime.vcxproj:71,94 + launcher.vcxproj (Debug/Release) — sem typeid/dynamic_cast no codigo
+
+### 8. Fase 4 — injecao (esperado 0 literais crus)
+L"javaw.exe" como default: 0 | L"OpenCommunitySharedMem" literal: 0 | "LWJGL"/"GLFW30" crus: 0
+"runtime.dll" cru: 0 | URLs github/discord/minotar cruas: 0 | "Injecting"/"Injected"/"Injection failed" crus: 0
+XOR_W presente (XorString.h + MemoryName() nos 2 Bridges) — PASS

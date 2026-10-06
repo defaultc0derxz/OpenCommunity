@@ -1,40 +1,21 @@
-Pos-fix runtime.dll strings — branch feat/obfuscate-strings
-Arquivo: C:\Users\andre\OneDrive\Desktop\OpenCommunity\runtime\build\Release\runtime.dll (2988032 bytes)
-RTTI desabilitado (/GR-), literais via XOR()+EncString.
+Pos-fix runtime.dll + launcher.exe strings â€” branch feat/obfuscate-strings (fase 4)
+RTTI desabilitado (/GR-) nos dois projetos; literais via XOR()/XOR_W()+EncString.
 
-Identificadores com leak: 0/33
-  AutoClicker: 0 ok
-  ArmorFilter: 0 ok
-  ArmorSwap: 0 ok
-  AutoGapple: 0 ok
-  NoHitDelay: 0 ok
-  NoJumpDelay: 0 ok
-  ArrayList: 0 ok
-  DamageIndicator: 0 ok
-  Nametags: 0 ok
-  EnemyInfoList: 0 ok
-  Notifications: 0 ok
-  ItemChams: 0 ok
-  NoRender: 0 ok
-  Target: 0 ok
-  HideClans: 0 ok
-  Min CPS: 0 ok
-  Max CPS: 0 ok
-  Show Allies: 0 ok
-  Player Name: 0 ok
-  Item Chams: 0 ok
-  J3 Ultimate: 0 ok
-  Astralis: 0 ok
-  Low Armor: 0 ok
-  Break Armor: 0 ok
-  Browse All Players: 0 ok
-  Open in new Application: 0 ok
-  AllEntities: 0 ok
-  MaxRenderRange: 0 ok
-  Automatically clicks: 0 ok
-  Displays active: 0 ok
-  Tracks enemy: 0 ok
-  Hides allied: 0 ok
-  Highlights eligible: 0 ok
+runtime.dll: 0 hits em todos os identificadores de modulo + injecao:
+  AutoClicker/ArmorFilter/ArmorSwap/AutoGapple/NoHitDelay/NoJumpDelay: 0
+  ArrayList/DamageIndicator/Nametags/EnemyInfoList/Notifications/ItemChams/NoRender/Target/HideClans: 0
+  Min CPS/Max CPS/Show Allies/Player Name/Item Chams/J3 Ultimate/Astralis: 0
+  Low Armor/Break Armor/Browse All Players/Open in new Application/AllEntities/MaxRenderRange: 0
+  javaw.exe/OpenCommunitySharedMem/runtime.dll/LWJGL/GLFW30: 0
+  Injecting/Injected/Injection failed/BADLION/FEATHER_1_8/CreateFileMappingW failed/Shared memory bridge: 0
+  OpenCommunity (brand/watermark): 0
+  Unico residual: "Movement" x1 = "net/minecraft/util/MovementInput" (string JNI do jogo, Â§7 fora de escopo).
 
-Conclusao: PASS — 0 hits (equivalente estatico de G3)
+launcher.exe: 0 hits em todos os identificadores de modulo + injecao:
+  AutoClicker/ArrayList/EnemyInfoList/Notifications (modulos e RTTI): 0
+  javaw.exe/OpenCommunitySharedMem/runtime.dll/LWJGL/GLFW30: 0
+  Injecting/Injected/Injection failed/Successful, Injected!/Checking for updates: 0
+  URLs (github/discord/minotar/api.github.com), UA, window class/title, tabNames, enemy_info IDs: 0
+  Unico residual: "Automatic" x2 = nomes de tema da UI ("Automatic"/"Automatic Palette", texto generico de settings).
+
+Conclusao: PASS â€” 0 hits em identificadores unicos nos dois binarios.

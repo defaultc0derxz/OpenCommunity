@@ -66,6 +66,14 @@ public:
         for (std::size_t j = 0; j < kRingSlotSize; ++j) p[j] = '\0';
         (void)needed; return slot;
     }
+    wchar_t* AcquireW(std::size_t wcharsNeeded) {
+        static_assert(kRingSlotSize >= 128 * sizeof(wchar_t), "ring slot too small for wide literals");
+        const std::size_t idx = m_Index.fetch_add(1, std::memory_order_relaxed) & (kRingSlotCount - 1);
+        char* raw = m_Slots[idx].buffer;
+        volatile char* p = reinterpret_cast<volatile char*>(raw);
+        for (std::size_t j = 0; j < kRingSlotSize; ++j) p[j] = '\0';
+        (void)wcharsNeeded; return reinterpret_cast<wchar_t*>(raw);
+    }
     static void WipeAll() {
         std::lock_guard<std::mutex> lock(GetMutex());
         for (XorRingBuffer* ring : GetInstances()) if (ring) ring->Wipe();
@@ -121,6 +129,30 @@ private:
 
 template <std::uint64_t Key, typename CharT, std::size_t Size>
 constexpr auto Make(const CharT (&literal)[Size]) { return XorLiteral<CharT, Size, Key>(literal); }
+
+template <std::size_t Size, std::uint64_t Key>
+class XorLiteral<wchar_t, Size, Key> {
+public:
+    static_assert(Size <= 128, "XOR-W literal too large for ring slot (max 127 chars + NUL)");
+    constexpr explicit XorLiteral(const wchar_t (&literal)[Size]) : m_Data{} {
+        for (std::size_t i = 0; i < Size; ++i) m_Data[i] = static_cast<wchar_t>(literal[i] ^ KeyAt<wchar_t>(Key, i));
+    }
+    const wchar_t* Get() const {
+        wchar_t* slot = GetThreadRing().AcquireW(Size);
+        const volatile wchar_t* enc = m_Data.data();
+        for (std::size_t i = 0; i < Size; ++i) slot[i] = static_cast<wchar_t>(enc[i] ^ KeyAt<wchar_t>(Key, i));
+        return slot;
+    }
+    std::basic_string<wchar_t> Decrypt() const {
+        const wchar_t* d = Get();
+        std::basic_string<wchar_t> r(Size > 0 ? Size - 1 : 0, wchar_t{});
+        for (std::size_t i = 0; i + 1 < Size; ++i) r[i] = d[i];
+        return r;
+    }
+    constexpr const std::array<wchar_t, Size>& Data() const { return m_Data; }
+private:
+    std::array<wchar_t, Size> m_Data;
+};
 
 class EncString {
 public:
@@ -208,3 +240,13 @@ inline void WipeAllXorStrings() { XorRingBuffer::WipeAll(); }
 
 #define XOR_STRING(literal) XOR_STRING_IMPL(literal, __COUNTER__)
 #define XOR(literal) XOR_STRING(literal)
+
+#define XOR_W_IMPL(literal, counter)                                                         \
+    ([]() -> const wchar_t* {                                                                \
+        static XOR_STRING_CONSTINIT auto encrypted = ::string_obfuscation::Make<              \
+            ::string_obfuscation::Seed(__TIME__, static_cast<std::uint64_t>(counter),         \
+                                       static_cast<std::uint64_t>(counter))>(literal);        \
+        return encrypted.Get();                                                               \
+    }())
+
+#define XOR_W(literal) XOR_W_IMPL(literal, __COUNTER__)
